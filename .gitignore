@@ -1,0 +1,21 @@
+# Papers are kept locally only — see refs/README.md for the bibliography and links.
+refs/*.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Data / artifacts (regenerable)
+data/*.npz
+data/*.pt
+data/*.h5
+*.log
+
+# OS
+desktop.ini
+Thumbs.db
+.DS_Store
