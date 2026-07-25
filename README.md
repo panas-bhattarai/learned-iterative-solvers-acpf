@@ -48,14 +48,31 @@ Each milestone is a self-contained notebook with figures and a plain-language re
 
 | # | Notebook | Content | Status |
 |---|---|---|---|
-| 01 | `01_newton_and_krylov.ipynb` | AC power flow Newton–Raphson from scratch, validated against pandapower. Then the linear subproblem $\mathbf{J}\Delta x = -\mathbf{f}$ three ways: sparse LU, GMRES, preconditioned GMRES. | in progress |
-| 02 | — | Arnoldi and GMRES by hand on a real power-flow Jacobian. What subspace is actually being built, and how much residual reduction lives at each dimension $m$. | planned |
+| 01 | [`01_newton_and_krylov.ipynb`](notebooks/01_newton_and_krylov.ipynb) | AC power flow Newton–Raphson from scratch, validated against pandapower. Then the linear subproblem $\mathbf{J}\Delta x = -\mathbf{f}$ three ways: sparse LU, GMRES, preconditioned GMRES. | **done** |
+| 02 | — | Do the optimal GMRES coefficients $\mathbf{y}$ cluster across instances from the same grid? If they do, learning them is plausible; if they scatter, we find out before building anything. | next |
 | 03 | — | Algorithm unrolling [1,2]: unroll a fixed-$m$ iteration and learn its parameters. | planned |
 | 04 | — | The Runge–Kutta neural network [4] reproduced on ODEs — the simplest instance of a learned algorithm. | planned |
 | 05 | — | R2N2 [5] on the *linear* subproblem: learned weights vs. GMRES at fixed subspace dimension. | planned |
 | 06 | — | R2N2 on the full nonlinear AC power flow. | planned |
 | 07 | — | Where it breaks: distribution shift, N-1 topologies, near-collapse loading. Safeguarded variants. | planned |
 | 08 | — | Batched GPU contingency screening — the regime where matrix-free can actually win. | planned |
+
+## Findings so far
+
+**Notebook 01.** Validated a from-scratch AC power flow against pandapower to machine
+precision on six cases, then measured the linear subproblem honestly:
+
+- Newton converges in **4–5 iterations** from a flat start on every case from 9 to 300
+  buses, with measured quadratic order. There is no room to win on outer iterations.
+- Plain GMRES needs $m = 120$ of $n = 181$ Krylov dimensions to reach $10^{-8}$ on
+  `case118` — **2.2× slower** than the sparse LU it was meant to replace.
+- ILU-preconditioned GMRES converges in **~4 matvecs**, but building the ILU costs
+  **1.13× a full LU solve**, so rebuilt per system it is *also* slower than LU.
+- **On a single power flow, nothing beats sparse LU.** Any speed-up must come from
+  amortizing work across many related systems — which is precisely the premise of
+  learning a solver, and precisely the regime contingency analysis lives in.
+
+![GMRES residual vs Krylov dimension](figures/01_gmres_residual_vs_dimension.png)
 
 ## Layout
 
