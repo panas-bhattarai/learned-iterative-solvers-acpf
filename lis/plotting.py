@@ -23,7 +23,10 @@ PALETTE = {
 }
 
 _RC = {
-    "figure.figsize": (7.2, 4.4),
+    # Figures are stacked one panel per row rather than side by side, so titles,
+    # axis labels and legends never collide. Width is fixed; height grows with
+    # the number of panels via the `stacked` helper below.
+    "figure.figsize": (8.6, 5.2),
     "figure.dpi": 110,
     "savefig.dpi": 200,
     "savefig.bbox": "tight",
@@ -51,6 +54,30 @@ def use_style() -> None:
     mpl.rcParams.update(_RC)
 
 
+def stacked(n_panels: int, panel_height: float = 5.0, width: float = 8.6,
+            square: bool = False):
+    """Create ``n_panels`` axes stacked vertically, one per row.
+
+    Vertical stacking is the house style here: side-by-side panels force titles and
+    tick labels into each other at any readable font size.  ``constrained`` layout
+    keeps the suptitle clear of the top axes automatically.
+
+    Parameters
+    ----------
+    square
+        Use a 1:1 panel aspect, for sparsity patterns and other matrix plots.
+    """
+    h = width if square else panel_height
+    fig, axes = plt.subplots(n_panels, 1, figsize=(width, h * n_panels),
+                             layout="constrained")
+    return fig, ([axes] if n_panels == 1 else list(axes))
+
+
+def suptitle(fig, text: str) -> None:
+    """Figure-level title, positioned consistently for stacked layouts."""
+    fig.suptitle(text, fontsize=13, fontweight="semibold")
+
+
 def save(fig, name: str, folder: str = "../figures") -> str:
     """Save a figure as PNG next to the notebooks and return its path."""
     from pathlib import Path
@@ -62,11 +89,18 @@ def save(fig, name: str, folder: str = "../figures") -> str:
     return str(path)
 
 
-def annotate_tolerance(ax, tol: float, label: str | None = None) -> None:
-    """Draw a horizontal convergence-tolerance guide line."""
+def annotate_tolerance(ax, tol: float, label: str | None = None,
+                       x: float = 0.015, ha: str = "left") -> None:
+    """Draw a horizontal convergence-tolerance guide line with a legible label.
+
+    The label sits on an opaque background so it stays readable where it crosses
+    data, which a bare text call does not.
+    """
     ax.axhline(tol, color=PALETTE["ref"], ls=":", lw=1.2)
-    ax.text(0.995, tol, label or f"tol = {tol:g}", transform=ax.get_yaxis_transform(),
-            ha="right", va="bottom", fontsize=9, color=PALETTE["ref"])
+    ax.text(x, tol, label or f"tol = {tol:g}", transform=ax.get_yaxis_transform(),
+            ha=ha, va="bottom", fontsize=9, color=PALETTE["ref"],
+            bbox=dict(fc="white", ec="none", alpha=0.85, pad=1.5))
 
 
-__all__ = ["PALETTE", "use_style", "save", "annotate_tolerance", "plt"]
+__all__ = ["PALETTE", "use_style", "save", "annotate_tolerance", "stacked",
+           "suptitle", "plt"]
