@@ -140,6 +140,73 @@ be checked against closed-form answers:
 
 ![Learning coefficients is not learning an order](figures/04_order_fragility.png)
 
+**Notebook 05.** R2N2 [5] — the architecture the series was building toward — applied to power
+flow, with a result the roadmap did not predict:
+
+- **On a linear system the learned inner coefficients provably add nothing.** For
+  $f(z)=\mathbf{A}z-b$ the inner recurrence gives $v_j = v_0 + h\mathbf{A}\sum_l \theta_{j,l}v_l$,
+  so $\operatorname{span}\{v_j\} = \mathcal{K}_n(\mathbf{A},v_0)$ for *any* $\theta$ — the same
+  reachable set as notebook 02's frozen polynomial. They only re-coordinatise it, turning a
+  convex least-squares into a non-convex search.
+- Measured at equal matvec budget: **R2N2 loses at every budget** to both the frozen polynomial
+  and GMRES, by 1.6–2.6×. Training also leaves the basis *worse* conditioned at every $n$.
+- **On the nonlinear residual**, where the inner evaluations carry curvature rather than Krylov
+  directions, R2N2 reaches **parity** (40 vs 36 residual evaluations to $10^{-8}$) — not
+  superiority, and $n=8$ diverged in training.
+- Consistent with [5], which presents its linear experiments "not because of the computational
+  benefits achievable" and locates the benefits in nonlinear problems.
+
+**Notebook 06.** Tried to break the frozen solver and mostly could not:
+
+- It tracks Newton through load scaling **to the loadability limit** (both fail at
+  $\lambda=3.2$), degrading 4 → 9 iterations rather than failing, because preconditioner drift
+  is smooth ($\kappa_2(\mathbf{M}^{-1}\mathbf{J})$: 1 → 142).
+- Held-out contingencies at 2.8× loading: no separation from Newton at all.
+- It breaks only under severe topology damage — at N-25 (23% Jacobian change) Newton solves
+  13/40, the unguarded solver 11/40.
+- **The obvious safeguard did not help and never fired.** Requiring monotone decrease admits
+  arbitrarily slow progress; the failures are *stalls*, not blow-ups, so every stalling step
+  passes the test. Requiring a decrease **rate** ($\gamma=0.5$) restores exact parity with
+  Newton, at 29% fallback in the hardest regime and 0% where the step is healthy.
+- Cost: one residual evaluation, **1.2%** of a matrix-based Newton iteration.
+
+> A monotonicity condition is not a convergence condition — and it fails silently, because
+> guarded and unguarded behave identically until you check whether the guard ever triggered.
+
+**Notebook 07.** The whole N-1 screen as one batched GPU solve, which only became possible once
+notebook 03 removed the Jacobian:
+
+- All 177 contingencies converge in a single batched solve: **465 ms against 2.23 s** for
+  sequential sparse Newton — a **5×** end-to-end speed-up, 80 → 394 contingencies/second.
+- **Lockstep is the dominant inefficiency, not the arithmetic.** Median 6 iterations, worst 28;
+  run naively everyone pays 28. Compacting converged cases out of the batch halves the total
+  (914 → 465 ms) and is possible *only* because no factorisation is pinned to a fixed shape.
+- Stated costs: the dense batched residual does **29×** the arithmetic of a sparse one, the
+  baseline is single-threaded, and at batch size 1 the GPU is several times *slower* than the
+  CPU.
+
+![Batched N-1 screening throughput](figures/07_batched_throughput.png)
+
+## Where the series ends up
+
+The arc is not the one the roadmap predicted:
+
+1. On a **single** power flow, nothing beats sparse LU.
+2. Learning only pays by **amortising across many related problems** — and since
+   $\mathbf{J}$ does not depend on the injections at all, **topology** is the axis that matters.
+3. A completely frozen solver matches Newton's iteration count on unseen contingencies, but the
+   cost is dominated by Jacobian **assembly**.
+4. Going **matrix-free** deletes that cost and gives the first genuine speed-up.
+5. Learned **inner** coefficients transform Runge–Kutta integrators, **provably cannot** help
+   the linear subproblem, and reach only parity on the nonlinear residual.
+6. The frozen solver's competence is wide but **bounded**, and only a *rate*-based safeguard
+   makes it never worse than Newton.
+7. Matrix-free is what makes the whole screen **batchable**.
+
+**The winning method is not the sophisticated one.** A reused ILU, five frozen coefficients,
+finite-difference matvecs and a residual check outperform every learned architecture tried here
+— and the reason each more elaborate idea failed is measurable and, in the R2N2 case, provable.
+
 ## Layout
 
 ```
