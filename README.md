@@ -50,8 +50,8 @@ Each milestone is a self-contained notebook with figures and a plain-language re
 |---|---|---|---|
 | 01 | [`01_newton_and_krylov.ipynb`](notebooks/01_newton_and_krylov.ipynb) | AC power flow Newton–Raphson from scratch, validated against pandapower. Then the linear subproblem $\mathbf{J}\Delta x = -\mathbf{f}$ three ways: sparse LU, GMRES, preconditioned GMRES. | **done** |
 | 02 | [`02_does_the_family_share_structure.ipynb`](notebooks/02_does_the_family_share_structure.ipynb) | Does a family of power flows share enough structure to learn from? Where the variation lives, what object can be frozen, preconditioner reuse across N-1, and a fully fixed solver tested end-to-end on unseen contingencies. | **done** |
-| 03 | — | Jacobian-free: take $\mathbf{J}v$ from a finite difference of the residual and drop matrix assembly entirely — the cost that currently dominates. | next |
-| 04 | — | The Runge–Kutta neural network [4] reproduced on ODEs — the simplest instance of a learned algorithm, and where learnable *inner* coefficients come from. | planned |
+| 03 | [`03_jacobian_free.ipynb`](notebooks/03_jacobian_free.ipynb) | Jacobian-free: take $\mathbf{J}v$ from a directional derivative of the residual and drop matrix assembly entirely. Finite difference vs. the exact complex-step derivative, and where each one's limits bite. | **done** |
+| 04 | — | The Runge–Kutta neural network [4] reproduced on ODEs — the simplest instance of a learned algorithm, and where learnable *inner* coefficients come from. | next |
 | 05 | — | R2N2 [5] on the linear subproblem: learned inner recurrence vs. the doomed monomial basis. | planned |
 | 06 | — | R2N2 on the full nonlinear AC power flow. | planned |
 | 07 | — | Where it breaks: distribution shift, near-collapse loading, safeguarded variants. | planned |
@@ -97,6 +97,25 @@ non-islanding N-1 outages — and asked whether it shares enough structure to le
   solves buy extra Newton steps, and each of those pays for a Jacobian assembly.
 
 ![A fully frozen solver on unseen contingencies](figures/02_end_to_end.png)
+
+**Notebook 03.** The frozen solver never needs $\mathbf{J}$ as a matrix — only the product
+$\mathbf{J}v$, which is a directional derivative of the residual:
+
+- Assembling $\mathbf{J}$ costs **~100× a residual evaluation**, so replacing the product
+  with a derivative deletes the dominant cost outright.
+- The **finite-difference** matvec costs one residual and gives ~8 correct digits, with its
+  optimum at $\varepsilon\sim\sqrt{\epsilon_{mach}}$ where truncation meets round-off.
+- The **complex-step** matvec is exact to $3\times10^{-16}$ for *any* $h$ below $10^{-8}$,
+  because it never subtracts nearly equal numbers. It needs a residual free of `conj`/`abs`
+  — the real polar form, validated against the complex form to $10^{-13}$.
+- **97/97 held-out contingencies converge** for every $m\ge5$, matrix-free.
+- **The finite-difference accuracy ceiling is real.** Through $m=8$ the two matvecs are
+  indistinguishable; at $m=12$ complex step reaches the sparse-LU baseline of 4 iterations
+  while finite difference stalls at 6.
+- Measured ~5–6× faster per power flow than matrix-based Newton — **conditional on our slow
+  assembly**. Break-even is around 140 µs of assembly, roughly half a sparse LU solve.
+
+![Finite difference vs complex step](figures/03_fd_vs_complex_step.png)
 
 ## Layout
 
