@@ -150,7 +150,7 @@ $$\begin{bmatrix} i_f \\ i_t \end{bmatrix} =
 Scattering these into the bus frame with the branch-to-bus connection matrices
 $\mathbf{C}_f,\mathbf{C}_t$ and adding bus shunts gives
 
-$$\mathbf{Y}_{bus} = \mathbf{C}_f^\top \mathbf{Y}_f + \mathbf{C}_t^\top \mathbf{Y}_t + \operatorname{diag}(\mathbf{y}_{sh})$$
+$$\mathbf{Y}_{bus} = \mathbf{C}_f^\top \mathbf{Y}_f + \mathbf{C}_t^\top \mathbf{Y}_t + \mathrm{diag}(\mathbf{y}_{sh})$$
 
 > **A bug worth recording.** Classic MATPOWER carries only the susceptance $b_c$ in this
 > model. The `BR_G` column — a branch shunt *conductance*, representing dielectric and
@@ -208,8 +208,8 @@ Newton needs $\mathbf{J} = \partial\mathbf{f}/\partial x$. Differentiating the c
 power injection with respect to angle and magnitude (MATPOWER's `dSbus_dV`), with
 $\mathbf{I} = \mathbf{Y}_{bus}\mathbf{V}$ and $\hat{\mathbf{V}} = \mathbf{V}/|\mathbf{V}|$:
 
-$$\frac{\partial \mathbf{S}}{\partial \boldsymbol{\theta}} = j\operatorname{diag}(\mathbf{V})\,\overline{\big(\operatorname{diag}(\mathbf{I}) - \mathbf{Y}_{bus}\operatorname{diag}(\mathbf{V})\big)}, \qquad
-\frac{\partial \mathbf{S}}{\partial |\mathbf{V}|} = \operatorname{diag}(\mathbf{V})\,\overline{\big(\mathbf{Y}_{bus}\operatorname{diag}(\hat{\mathbf{V}})\big)} + \operatorname{diag}(\overline{\mathbf{I}})\operatorname{diag}(\hat{\mathbf{V}})$$
+$$\frac{\partial \mathbf{S}}{\partial \boldsymbol{\theta}} = j\mathrm{diag}(\mathbf{V})\,\overline{\big(\mathrm{diag}(\mathbf{I}) - \mathbf{Y}_{bus}\mathrm{diag}(\mathbf{V})\big)}, \qquad
+\frac{\partial \mathbf{S}}{\partial |\mathbf{V}|} = \mathrm{diag}(\mathbf{V})\,\overline{\big(\mathbf{Y}_{bus}\mathrm{diag}(\hat{\mathbf{V}})\big)} + \mathrm{diag}(\overline{\mathbf{I}})\mathrm{diag}(\hat{\mathbf{V}})$$
 
 Taking real and imaginary parts on the right bus subsets gives the four familiar blocks:
 
@@ -494,7 +494,7 @@ Sparse LU *factorizes* $\mathbf{J}$. A Krylov method never forms or factorizes a
 it only multiplies by $\mathbf{J}$. Starting from residual
 $\mathbf{r}_0 = \mathbf{b} - \mathbf{A}\mathbf{x}_0$, it builds the **Krylov subspace** [3, Ch. 6]
 
-$$\mathcal{K}_m(\mathbf{A},\mathbf{r}_0) = \operatorname{span}\{\mathbf{r}_0,\;\mathbf{A}\mathbf{r}_0,\;\mathbf{A}^2\mathbf{r}_0,\;\dots,\;\mathbf{A}^{m-1}\mathbf{r}_0\}$$
+$$\mathcal{K}_m(\mathbf{A},\mathbf{r}_0) = \mathrm{span}\{\mathbf{r}_0,\;\mathbf{A}\mathbf{r}_0,\;\mathbf{A}^2\mathbf{r}_0,\;\dots,\;\mathbf{A}^{m-1}\mathbf{r}_0\}$$
 
 and searches for the correction *inside that subspace*. GMRES picks the member that
 minimizes the residual:

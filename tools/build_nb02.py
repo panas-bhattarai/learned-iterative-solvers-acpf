@@ -112,7 +112,7 @@ md(r"""
 
 Before measuring anything, look again at what the Jacobian is built from:
 
-$$\frac{\partial \mathbf{S}}{\partial \boldsymbol{\theta}} = j\operatorname{diag}(\mathbf{V})\,\overline{\big(\operatorname{diag}(\mathbf{Y}_{bus}\mathbf{V}) - \mathbf{Y}_{bus}\operatorname{diag}(\mathbf{V})\big)}$$
+$$\frac{\partial \mathbf{S}}{\partial \boldsymbol{\theta}} = j\mathrm{diag}(\mathbf{V})\,\overline{\big(\mathrm{diag}(\mathbf{Y}_{bus}\mathbf{V}) - \mathbf{Y}_{bus}\mathrm{diag}(\mathbf{V})\big)}$$
 
 Only $\mathbf{V}$ and $\mathbf{Y}_{bus}$ appear. **$\mathbf{S}^{spec}$ does not.**
 

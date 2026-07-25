@@ -121,8 +121,8 @@ $$v_j = \mathbf{A}\Big(x_k + h\sum_{l<j}\theta_{j,l}v_l\Big) - b
 Every $v_j$ is $v_0$ plus $\mathbf{A}$ applied to a combination of earlier $v$'s, so by
 induction
 
-$$\operatorname{span}\{v_0,\dots,v_{n-1}\} = \mathcal{K}_n(\mathbf{A}, v_0)
-= \operatorname{span}\{v_0, \mathbf{A}v_0,\dots,\mathbf{A}^{n-1}v_0\}$$
+$$\mathrm{span}\{v_0,\dots,v_{n-1}\} = \mathcal{K}_n(\mathbf{A}, v_0)
+= \mathrm{span}\{v_0, \mathbf{A}v_0,\dots,\mathbf{A}^{n-1}v_0\}$$
 
 **for any values of $\theta_{j,l}$** — provided the recurrence is non-degenerate. The outer
 update $x_{k+1} = x_k + h\sum_j\theta_{n,j}v_j$ therefore lands in $x_k + \mathcal{K}_n$,
@@ -506,7 +506,7 @@ md(r"""
 **Proved, then measured:**
 
 - On a **linear** system, R2N2's inner coefficients leave the reachable set unchanged —
-  $\operatorname{span}\{v_j\} = \mathcal{K}_n(\mathbf{A},v_0)$ for any $\theta$ — so they add
+  $\mathrm{span}\{v_j\} = \mathcal{K}_n(\mathbf{A},v_0)$ for any $\theta$ — so they add
   no expressive power over notebook 02's frozen polynomial, while turning a convex
   least-squares into a non-convex search. Measured: R2N2 loses at **every** budget, by
   1.2–2.2×.

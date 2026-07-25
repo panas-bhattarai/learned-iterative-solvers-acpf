@@ -145,7 +145,7 @@ flow, with a result the roadmap did not predict:
 
 - **On a linear system the learned inner coefficients provably add nothing.** For
   $f(z)=\mathbf{A}z-b$ the inner recurrence gives $v_j = v_0 + h\mathbf{A}\sum_l \theta_{j,l}v_l$,
-  so $\operatorname{span}\{v_j\} = \mathcal{K}_n(\mathbf{A},v_0)$ for *any* $\theta$ — the same
+  so $\mathrm{span}\{v_j\} = \mathcal{K}_n(\mathbf{A},v_0)$ for *any* $\theta$ — the same
   reachable set as notebook 02's frozen polynomial. They only re-coordinatise it, turning a
   convex least-squares into a non-convex search.
 - Measured at equal matvec budget: **R2N2 loses at every budget** to both the frozen polynomial
