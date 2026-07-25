@@ -64,6 +64,9 @@ precision on six cases, then measured the linear subproblem honestly:
 
 - Newton converges in **4–5 iterations** from a flat start on every case from 9 to 300
   buses, with measured quadratic order. There is no room to win on outer iterations.
+- The linear solve does **not** dominate at small sizes — on `case118` it is ~10% of a
+  Newton iteration. Its share crosses 50% only near $n \approx 2400$ and reaches ~65% on
+  `case2869pegase`. (The crossover is implementation-dependent; the scaling is not.)
 - Plain GMRES needs $m = 120$ of $n = 181$ Krylov dimensions to reach $10^{-8}$ on
   `case118` — **2.2× slower** than the sparse LU it was meant to replace.
 - ILU-preconditioned GMRES converges in **~4 matvecs**, but building the ILU costs
