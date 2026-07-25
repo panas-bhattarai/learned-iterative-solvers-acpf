@@ -52,10 +52,10 @@ Each milestone is a self-contained notebook with figures and a plain-language re
 | 02 | [`02_does_the_family_share_structure.ipynb`](notebooks/02_does_the_family_share_structure.ipynb) | Does a family of power flows share enough structure to learn from? Where the variation lives, what object can be frozen, preconditioner reuse across N-1, and a fully fixed solver tested end-to-end on unseen contingencies. | **done** |
 | 03 | [`03_jacobian_free.ipynb`](notebooks/03_jacobian_free.ipynb) | Jacobian-free: take $\mathbf{J}v$ from a directional derivative of the residual and drop matrix assembly entirely. Finite difference vs. the exact complex-step derivative, and where each one's limits bite. | **done** |
 | 04 | [`04_learning_the_butcher_tableau.ipynb`](notebooks/04_learning_the_butcher_tableau.ipynb) | The Runge–Kutta neural network [4] reproduced on ODEs, where answers are known in closed form. Learnable *inner* coefficients, a two-stage method reaching third order, and what "learning an order" does and does not mean. | **done** |
-| 05 | — | R2N2 [5] on the linear subproblem: learned inner recurrence vs. the doomed monomial basis. | next |
-| 06 | — | R2N2 on the full nonlinear AC power flow. | planned |
-| 07 | — | Where it breaks: distribution shift, near-collapse loading, safeguarded variants. | planned |
-| 08 | — | Batched GPU contingency screening — the regime where matrix-free can actually win. | planned |
+| 05 | [`05_r2n2.ipynb`](notebooks/05_r2n2.ipynb) | R2N2 [5] on power flow. Why learned inner coefficients *provably cannot* help the linear subproblem, and only reach parity on the nonlinear residual. | **done** |
+| 06 | [`06_where_it_breaks.ipynb`](notebooks/06_where_it_breaks.ipynb) | Trying to break the frozen solver: load scaling to the loadability limit, combined stress, N-$k$ outages. The safeguard that nearly did not work. | **done** |
+| 07 | [`07_batched_gpu_screening.ipynb`](notebooks/07_batched_gpu_screening.ipynb) | The whole N-1 screen as a single batched GPU solve — what removing the Jacobian finally buys. | **done** |
+
 
 ## Findings so far
 
