@@ -49,12 +49,12 @@ Each milestone is a self-contained notebook with figures and a plain-language re
 | # | Notebook | Content | Status |
 |---|---|---|---|
 | 01 | [`01_newton_and_krylov.ipynb`](notebooks/01_newton_and_krylov.ipynb) | AC power flow Newton–Raphson from scratch, validated against pandapower. Then the linear subproblem $\mathbf{J}\Delta x = -\mathbf{f}$ three ways: sparse LU, GMRES, preconditioned GMRES. | **done** |
-| 02 | — | Do the optimal GMRES coefficients $\mathbf{y}$ cluster across instances from the same grid? If they do, learning them is plausible; if they scatter, we find out before building anything. | next |
-| 03 | — | Algorithm unrolling [1,2]: unroll a fixed-$m$ iteration and learn its parameters. | planned |
-| 04 | — | The Runge–Kutta neural network [4] reproduced on ODEs — the simplest instance of a learned algorithm. | planned |
-| 05 | — | R2N2 [5] on the *linear* subproblem: learned weights vs. GMRES at fixed subspace dimension. | planned |
+| 02 | [`02_does_the_family_share_structure.ipynb`](notebooks/02_does_the_family_share_structure.ipynb) | Does a family of power flows share enough structure to learn from? Where the variation lives, what object can be frozen, preconditioner reuse across N-1, and a fully fixed solver tested end-to-end on unseen contingencies. | **done** |
+| 03 | — | Jacobian-free: take $\mathbf{J}v$ from a finite difference of the residual and drop matrix assembly entirely — the cost that currently dominates. | next |
+| 04 | — | The Runge–Kutta neural network [4] reproduced on ODEs — the simplest instance of a learned algorithm, and where learnable *inner* coefficients come from. | planned |
+| 05 | — | R2N2 [5] on the linear subproblem: learned inner recurrence vs. the doomed monomial basis. | planned |
 | 06 | — | R2N2 on the full nonlinear AC power flow. | planned |
-| 07 | — | Where it breaks: distribution shift, N-1 topologies, near-collapse loading. Safeguarded variants. | planned |
+| 07 | — | Where it breaks: distribution shift, near-collapse loading, safeguarded variants. | planned |
 | 08 | — | Batched GPU contingency screening — the regime where matrix-free can actually win. | planned |
 
 ## Findings so far
@@ -76,6 +76,27 @@ precision on six cases, then measured the linear subproblem honestly:
   learning a solver, and precisely the regime contingency analysis lives in.
 
 ![GMRES residual vs Krylov dimension](figures/01_gmres_residual_vs_dimension.png)
+
+**Notebook 02.** Sampled a family from `case118` — load/dispatch perturbations and all 177
+non-islanding N-1 outages — and asked whether it shares enough structure to learn from:
+
+- **$\mathbf{J} = \mathbf{J}(\mathbf{V}, \mathbf{Y}_{bus})$ — the Jacobian does not depend
+  on the injections.** Under load variation at a fixed state it is *bit-identical*; a
+  branch outage moves it 10–100× more. Topology, not loading, is the interesting axis.
+- **A reused preconditioner transfers.** One ILU factored from the intact grid conditions
+  every contingency Jacobian ($\kappa_2: 3000 \to \approx 1$), even for outages that move
+  $\mathbf{J}$ by 30%.
+- **A single frozen coefficient vector cannot match per-instance refitting** — it plateaus
+  around $2\times10^{-4}$ against the oracle's $6\times10^{-11}$, and stops responding to
+  degree past $m\approx4$.
+- **Training on the wrong distribution cost 0/97 convergence.** Fitting only on flat-start
+  systems failed completely; fitting over the states Newton actually visits gave 97/97.
+- **End to end: it works, but is not yet faster.** A fully frozen solver — one
+  preconditioner, one coefficient vector, zero runtime adaptation — converges all 97 unseen
+  contingencies in the same 4 Newton iterations as sparse LU at $m=12$. Cheaper linear
+  solves buy extra Newton steps, and each of those pays for a Jacobian assembly.
+
+![A fully frozen solver on unseen contingencies](figures/02_end_to_end.png)
 
 ## Layout
 

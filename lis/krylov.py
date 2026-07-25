@@ -198,6 +198,89 @@ def gmres(a_mv, b: np.ndarray, m: int, x0: np.ndarray | None = None,
 # Preconditioning and the direct reference
 # --------------------------------------------------------------------------------------
 
+def krylov_basis(a_mv, r0: np.ndarray, m: int) -> np.ndarray:
+    r"""The raw (un-orthogonalized) Krylov basis
+    :math:`\mathbf{K}_m = [r_0,\ \mathbf{A}r_0,\ \dots,\ \mathbf{A}^{m-1}r_0]`.
+
+    Costs :math:`m-1` matrix-vector products and nothing else: no Gram-Schmidt, no
+    orthogonalization, no inner products.  Contrast :func:`arnoldi`, which spans the same
+    space but pays :math:`O(m^2)` inner products to make the basis orthonormal.
+    """
+    mv = a_mv if callable(a_mv) else (lambda v: a_mv @ v)
+    k = np.empty((r0.shape[0], m), dtype=float)
+    k[:, 0] = r0
+    for j in range(1, m):
+        k[:, j] = mv(k[:, j - 1])
+    return k
+
+
+def optimal_poly_coeffs(a_mv, b: np.ndarray, m: int, rcond: float = 1e-12):
+    r"""Best degree-:math:`m` polynomial iteration for a *single* system.
+
+    Restrict the solution to the Krylov subspace written in the **monomial** basis:
+
+    .. math::
+        \Delta x = \sum_{j=0}^{m-1} \alpha_j \mathbf{A}^j \mathbf{b} = p(\mathbf{A})\,\mathbf{b}
+
+    and choose :math:`\boldsymbol{\alpha}` to minimize the true residual
+    :math:`\lVert \mathbf{b} - \mathbf{A}\,p(\mathbf{A})\mathbf{b} \rVert_2`.  Since
+    :math:`\mathbf{A}p(\mathbf{A})\mathbf{b} = \mathbf{W}\boldsymbol{\alpha}` with
+    :math:`\mathbf{W} = [\mathbf{A}\mathbf{b}, \dots, \mathbf{A}^m\mathbf{b}]`, this is a
+    dense :math:`n \times m` least-squares problem.
+
+    **Why this parametrization and not GMRES's.**  GMRES writes its update as
+    :math:`\Delta x = \mathbf{Q}_m \mathbf{y}` in the *orthonormal Arnoldi basis*.  That
+    basis is rebuilt for every system, so freezing :math:`\mathbf{y}` would still leave
+    all the Gram-Schmidt work at runtime and save only the tiny least-squares.  The
+    monomial coefficients :math:`\boldsymbol{\alpha}` are different: freeze them and you
+    have a complete, self-contained algorithm -- :math:`m-1` matvecs and a weighted sum,
+    with *no runtime optimization of any kind*.  That is the object worth asking whether
+    one can learn, and it is the same "generate, then assemble" skeleton as R2N2 [5] and
+    Runge-Kutta [4].
+
+    Note also that :math:`\boldsymbol{\alpha}` is invariant to scaling of :math:`\mathbf{b}`
+    -- if :math:`\mathbf{b} \to c\mathbf{b}` then :math:`\Delta x \to c\,\Delta x` with the
+    same coefficients -- so coefficients from different instances are directly comparable
+    without normalization.  They do, however, carry the units of
+    :math:`\mathbf{A}^{-1}`, and so scale with the magnitude of :math:`\mathbf{A}`.
+
+    Returns
+    -------
+    alpha, rel_residual, cond_w
+        Coefficients, the achieved :math:`\lVert r_m\rVert/\lVert r_0\rVert`, and the
+        condition number of :math:`\mathbf{W}`.  **Watch ``cond_w``**: powers
+        :math:`\mathbf{A}^j\mathbf{b}` align with the dominant eigenvector as :math:`j`
+        grows, so the monomial basis degenerates quickly.  That numerical fragility is
+        precisely why Arnoldi exists, and it bounds how large an :math:`m` this analysis
+        can honestly use.
+    """
+    mv = a_mv if callable(a_mv) else (lambda v: a_mv @ v)
+    w = np.empty((b.shape[0], m), dtype=float)
+    w[:, 0] = mv(b)
+    for j in range(1, m):
+        w[:, j] = mv(w[:, j - 1])
+
+    alpha, *_ = np.linalg.lstsq(w, b, rcond=rcond)
+    rel = float(np.linalg.norm(b - w @ alpha) / np.linalg.norm(b))
+    return alpha, rel, float(np.linalg.cond(w))
+
+
+def apply_poly(a_mv, b: np.ndarray, alpha: np.ndarray) -> np.ndarray:
+    r"""Run a *fixed* polynomial iteration: :math:`\Delta x = \sum_j \alpha_j \mathbf{A}^j\mathbf{b}`.
+
+    This is the whole algorithm.  Given ``alpha``, solving a system costs ``len(alpha)-1``
+    matrix-vector products and a weighted sum -- no factorization, no orthogonalization,
+    no least squares, no adaptivity of any kind.
+    """
+    mv = a_mv if callable(a_mv) else (lambda v: a_mv @ v)
+    x = alpha[0] * b
+    v = b
+    for j in range(1, len(alpha)):
+        v = mv(v)
+        x = x + alpha[j] * v
+    return x
+
+
 def ilu_preconditioner(a: sp.spmatrix, drop_tol: float = 1e-4, fill_factor: float = 10.0):
     r"""Incomplete LU preconditioner :math:`\mathbf{M}^{-1} \approx \mathbf{A}^{-1}`.
 
