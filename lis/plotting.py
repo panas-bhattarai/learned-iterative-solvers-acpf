@@ -32,7 +32,10 @@ _RC = {
     "savefig.bbox": "tight",
     "font.size": 10.5,
     "axes.titlesize": 12,
-    "axes.titleweight": "semibold",
+    # "bold" (700), not "semibold" (600): the default DejaVu Sans ships only weights
+    # 400 and 700, so 600 silently falls back to 700 and logs a findfont warning into
+    # every notebook cell that draws a titled figure.
+    "axes.titleweight": "bold",
     "axes.labelsize": 10.5,
     "axes.grid": True,
     "axes.axisbelow": True,
@@ -75,7 +78,7 @@ def stacked(n_panels: int, panel_height: float = 5.0, width: float = 8.6,
 
 def suptitle(fig, text: str) -> None:
     """Figure-level title, positioned consistently for stacked layouts."""
-    fig.suptitle(text, fontsize=13, fontweight="semibold")
+    fig.suptitle(text, fontsize=13, fontweight="bold")
 
 
 def save(fig, name: str, folder: str = "../figures") -> str:
