@@ -51,8 +51,8 @@ Each milestone is a self-contained notebook with figures and a plain-language re
 | 01 | [`01_newton_and_krylov.ipynb`](notebooks/01_newton_and_krylov.ipynb) | AC power flow Newton–Raphson from scratch, validated against pandapower. Then the linear subproblem $\mathbf{J}\Delta x = -\mathbf{f}$ three ways: sparse LU, GMRES, preconditioned GMRES. | **done** |
 | 02 | [`02_does_the_family_share_structure.ipynb`](notebooks/02_does_the_family_share_structure.ipynb) | Does a family of power flows share enough structure to learn from? Where the variation lives, what object can be frozen, preconditioner reuse across N-1, and a fully fixed solver tested end-to-end on unseen contingencies. | **done** |
 | 03 | [`03_jacobian_free.ipynb`](notebooks/03_jacobian_free.ipynb) | Jacobian-free: take $\mathbf{J}v$ from a directional derivative of the residual and drop matrix assembly entirely. Finite difference vs. the exact complex-step derivative, and where each one's limits bite. | **done** |
-| 04 | — | The Runge–Kutta neural network [4] reproduced on ODEs — the simplest instance of a learned algorithm, and where learnable *inner* coefficients come from. | next |
-| 05 | — | R2N2 [5] on the linear subproblem: learned inner recurrence vs. the doomed monomial basis. | planned |
+| 04 | [`04_learning_the_butcher_tableau.ipynb`](notebooks/04_learning_the_butcher_tableau.ipynb) | The Runge–Kutta neural network [4] reproduced on ODEs, where answers are known in closed form. Learnable *inner* coefficients, a two-stage method reaching third order, and what "learning an order" does and does not mean. | **done** |
+| 05 | — | R2N2 [5] on the linear subproblem: learned inner recurrence vs. the doomed monomial basis. | next |
 | 06 | — | R2N2 on the full nonlinear AC power flow. | planned |
 | 07 | — | Where it breaks: distribution shift, near-collapse loading, safeguarded variants. | planned |
 | 08 | — | Batched GPU contingency screening — the regime where matrix-free can actually win. | planned |
@@ -116,6 +116,29 @@ $\mathbf{J}v$, which is a directional derivative of the residual:
   assembly**. Break-even is around 140 µs of assembly, roughly half a sparse LU solve.
 
 ![Finite difference vs complex step](figures/03_fd_vs_complex_step.png)
+
+**Notebook 04.** Notebook 02's monomial basis died at $m\approx5$ because the *inner*
+recurrence was fixed to $\mathbf{A}^j\mathbf{b}$. The Runge–Kutta neural network of [4] is
+the smallest instance of the fix — learn the Butcher tableau — and on ODEs every claim can
+be checked against closed-form answers:
+
+- **A two-stage method reaches third order**, breaking the general $p\le m$ barrier, via the
+  unique analytic tableau $(\theta_1,\theta_{c1},\theta_{c2})=(2,\,0.75,\,0.25)$. Measured
+  slope 3.04 against 2.01 for classical RK2.
+- **Training recovers it to six decimal places** from data alone — but only the Taylor
+  regulariser does. The scaled MSE term of [4] is heavy-tailed here (the ratio scales like
+  $h^{-2}$, spanning eight orders of magnitude within a batch) and *annihilates* the
+  regulariser: adding it changed the learned coefficients by nothing at all.
+- **Order is exact cancellation, not small error.** $|\theta_1-2|=10^{-3}$ still measures
+  slope 1.50; third order needs $\sim10^{-5}$. Yet the error at $h=0.1$ barely moves. A
+  learned method can look like it has a structural property it does not have, and only
+  out-of-distribution testing reveals it.
+- **Not reproduced:** [4] reports learned integrators beating classical RK at equal stage
+  count. Ours attains the right order with a **5.2× larger error constant** than RK3, and
+  three objectives failed to close it. The regulariser fixes the order and says nothing
+  about the constant; the term that would tune it is the one we could not optimise.
+
+![Learning coefficients is not learning an order](figures/04_order_fragility.png)
 
 ## Layout
 
