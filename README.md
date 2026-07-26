@@ -53,7 +53,7 @@ Each milestone is a self-contained notebook with figures and a plain-language re
 | 03 | [`03_jacobian_free.ipynb`](notebooks/03_jacobian_free.ipynb) | Jacobian-free: take $\mathbf{J}v$ from a directional derivative of the residual and drop matrix assembly entirely. Finite difference vs. the exact complex-step derivative, and where each one's limits bite. | **done** |
 | 04 | [`04_learning_the_butcher_tableau.ipynb`](notebooks/04_learning_the_butcher_tableau.ipynb) | The Runge–Kutta neural network [4] reproduced on ODEs, where answers are known in closed form. Learnable *inner* coefficients, a two-stage method reaching third order, and what "learning an order" does and does not mean. | **done** |
 | 05 | [`05_r2n2.ipynb`](notebooks/05_r2n2.ipynb) | R2N2 [5] on power flow. Why learned inner coefficients *provably cannot* help the linear subproblem, and only reach parity on the nonlinear residual. | **done** |
-| 06 | [`06_where_it_breaks.ipynb`](notebooks/06_where_it_breaks.ipynb) | Trying to break the frozen solver: load scaling to the loadability limit, combined stress, N-$k$ outages. The safeguard that nearly did not work. | **done** |
+| 06 | [`06_where_it_breaks.ipynb`](notebooks/06_where_it_breaks.ipynb) | Trying to break the frozen solver: load scaling to the loadability limit, combined stress, $N-k$ outages. The safeguard that nearly did not work. | **done** |
 | 07 | [`07_batched_gpu_screening.ipynb`](notebooks/07_batched_gpu_screening.ipynb) | The whole N-1 screen as a single batched GPU solve — what removing the Jacobian finally buys. | **done** |
 
 
