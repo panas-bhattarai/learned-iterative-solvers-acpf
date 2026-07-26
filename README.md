@@ -230,3 +230,8 @@ pip install -r requirements.txt
 
 Python 3.11, PyTorch 2.11 (CUDA 12.8), pandapower 3.5. A GPU is only needed from
 notebook 08 onward.
+
+## AI-assisted development
+
+This work was carried out with substantial assistance from an AI coding assistant,
+under the direction and review of the author.
